@@ -8,10 +8,35 @@ import { CalendarOutlined , FolderOutlined, FireOutlined   } from '@ant-design/i
 import Authors from '../components/Author'
 import Advert from '../components/Advert'
 import Footer from '../components/Footer'
+import servicePath from '../config/apiUrl'
 import axios from 'axios'
 import Link from 'next/link'
+import marked from 'marked'
+import hljs from "highlight.js";
+import 'highlight.js/styles/monokai-sublime.css';
+import Tocify from '../components/tocify.tsx'
 function Home(list) {
-    console.log(list)
+    const tocify = new Tocify()
+    const renderer = new marked.Renderer();
+    renderer.heading = function(text, level, raw) {
+        const anchor = tocify.add(text, level);
+        return `<a id="${anchor}" href="#${anchor}" class="anchor-fix"><h${level}>${text}</h${level}></a>\n`;
+    };
+    marked.setOptions({
+        renderer: renderer,
+        gfm: true,
+        pedantic: false,
+        sanitize: false,
+        tables: true,
+        breaks: false,
+        smartLists: true,
+        smartypants: false,
+        xhtml: false,
+        highlight: function (code) {
+            return hljs.highlightAuto(code).value;
+        }
+
+    });
     const [myList, setMyList] = useState(list.data)
   return (
     <>
@@ -35,9 +60,9 @@ function Home(list) {
                                 <div className="list-icon">
                                     <span><CalendarOutlined/>{item.addTime}</span>
                                     <span><FolderOutlined/>{item.typeName}</span>
-                                    <span><FireOutlined/>{item.view_count}</span>
+                                    <span><FireOutlined/>{item.view_count}人</span>
                                 </div>
-                                <div className='list-context'>{item.introduce}</div>
+                                <div className='list-context' dangerouslySetInnerHTML={{__html:marked(item.introduce)}}></div>
                             </List.Item>
                         )
                     }
@@ -55,7 +80,7 @@ function Home(list) {
   )
 }
 Home.getInitialProps  = async ()=>{
-    let res=await axios.get('http://127.0.0.1:7001/default/getArticleList')
+    let res=await axios.get(servicePath.getArticleList)
     console.log(res)
     return res.data
 }
